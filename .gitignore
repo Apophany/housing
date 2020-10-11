@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Pycharm folders
+/.idea/*
+
+# Keys
+/resources/api_keys.py
+/resources/file_paths.py
