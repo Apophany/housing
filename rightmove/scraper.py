@@ -1,5 +1,4 @@
 import datetime as dt
-
 import numpy as np
 import pandas as pd
 import requests
@@ -37,6 +36,7 @@ class RightmoveData:
 
     @staticmethod
     def _request(url: str):
+        print("Requesting: {}".format(url))
         r = requests.get(url)
         return r.status_code, r.content
 
@@ -177,6 +177,16 @@ class RightmoveData:
         //div[@class="propertyCard-branchLogo"]\
         //a[@class="propertyCard-branchLogo-link"]/@href"""
 
+        xp_date_added = """//*[@id="firstListedDateValue"]/text()"""
+        xp_date_added_2 = """//*[@id="root"]/div/div[3]/main/div[2]/div[2]/div/div[2]/div/div/text()"""
+        xp_date_added_3 = """//*[@id="root"]/div/div[3]/main/div[2]/div/div/div[2]/div/div/text()"""
+
+        xp_description = """normalize-space(//*[@id="description"]/div/div[1]/div[2]/p)"""
+        xp_description_2 = """normalize-space(//*[@id="description"]/div/div[1]/div/p)"""
+        xp_description_3 = """normalize-space(//*[@id="description"]/div/div[1]/div[3]/p[1])"""
+        xp_description_4 = """normalize-space(//*[@id="root"]/div/div[3]/main/div[9]/div/div)"""
+        xp_description_5 = """normalize-space(//*[@id="description"]/div/div[1]/div[2])"""
+
         # Create data lists from xpaths:
         price_pcm = tree.xpath(xp_prices)
         titles = tree.xpath(xp_titles)
@@ -201,19 +211,41 @@ class RightmoveData:
             status_code, content = self._request(weblink)
             if status_code != 200:
                 continue
+
             tree = html.fromstring(content)
 
-            date_added_url = """//*[@id="firstListedDateValue"]/text()"""
-            description_url = """normalize-space(//*[@id="description"]/div/div[1]/div[2]/p)"""
-            date_added = tree.xpath(date_added_url)
-            description = tree.xpath(description_url)
+            date_added = tree.xpath(xp_date_added)
+            date_added_2 = tree.xpath(xp_date_added_2)
+            date_added_3 = tree.xpath(xp_date_added_3)
+            description = tree.xpath(xp_description)
+            description_2 = tree.xpath(xp_description_2)
+            description_3 = tree.xpath(xp_description_3)
+            description_4 = tree.xpath(xp_description_4)
+            description_5 = tree.xpath(xp_description_5)
 
             if date_added:
-                date = date_added[0]
-                dates_added.append(dt.datetime.strptime(date, "%d %B %Y").strftime("%Y-%m-%d"))
+                dates_added.append(self._parse_date(date_added[0]))
+            elif date_added_2:
+                dates_added.append(self._parse_date(date_added_2[0]))
+            elif date_added_3:
+                dates_added.append(self._parse_date(date_added_3[0]))
+            else:
+                print("Failed to get date added for: {}".format(weblink))
+                dates_added.append("")
 
             if description:
                 descriptions.append(description)
+            elif description_2:
+                descriptions.append(description_2)
+            elif description_3:
+                descriptions.append(description_3)
+            elif description_4:
+                descriptions.append(description_4)
+            elif description_5:
+                descriptions.append(description_5)
+            else:
+                print("Failed to get descriptions for: {}".format(weblink))
+                descriptions.append("")
 
             if get_floorplans:
                 xp_floorplan_url = """//*[@id="floorplanTabs"]/div[2]/div[2]/img/@src"""
@@ -285,4 +317,12 @@ class RightmoveData:
         now = dt.datetime.today()
         results["search_date"] = now
 
-        return results
+        return results.drop_duplicates()
+
+    def _parse_date(self, date: str) -> str:
+        if "today" in date:
+            return dt.datetime.today().strftime("%Y-%m-%d")
+        elif "yesterday" in date:
+            return (dt.datetime.today() - dt.timedelta(1)).strftime("%Y-%m-%d")
+
+        return dt.datetime.strptime(date, "%d %B %Y").strftime("%Y-%m-%d")

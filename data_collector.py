@@ -1,13 +1,11 @@
 import os
 from argparse import ArgumentParser
 from datetime import date
-
 from pandas import DataFrame
-
 from areainfo.borough import Borough
 from areainfo.boroughs import get_boroughs
 from resources.file_paths import data_save_path_prefix
-from rightmove import region_scraper
+from rightmove import scraper_wrapper
 
 __save_path_template = data_save_path_prefix + "/{region}/{date}/{numBedrooms}"
 __file_name = "housing_data.csv"
@@ -15,10 +13,13 @@ __max_bedrooms = 10
 
 
 def save_results(curr_date: str, borough_name: str, num_bedrooms: int, result: DataFrame, dry_run: bool):
+    if not is_int(num_bedrooms):
+        return
+
     save_path = __save_path_template.format(
         date=curr_date,
         region=borough_name,
-        numBedrooms=num_bedrooms
+        numBedrooms=int(num_bedrooms)
     )
     print("Saving rightmove data for: {}".format(save_path))
 
@@ -31,6 +32,14 @@ def save_results(curr_date: str, borough_name: str, num_bedrooms: int, result: D
     result.to_csv(os.path.join(save_path, __file_name))
 
 
+def is_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
+
 def save_all_days_data(borough: Borough, dry_run: bool):
     """
     Scrape rightmove for borough data with properties added any time. Since this
@@ -41,7 +50,7 @@ def save_all_days_data(borough: Borough, dry_run: bool):
     for num_bedrooms in range(0, __max_bedrooms + 1):
         print("Scraping rightmove for borough: {}, bedrooms = {}, days = {}".format(borough.name, num_bedrooms, "ALL"))
 
-        results = region_scraper.scrape(borough.rightmove_code, min_bedrooms=num_bedrooms, max_bedrooms=num_bedrooms)
+        results = scraper_wrapper.scrape(borough.rightmove_code, min_bedrooms=num_bedrooms, max_bedrooms=num_bedrooms)
         added_dates = results.date_added.unique()
 
         for curr_date in added_dates:
@@ -56,7 +65,7 @@ def save_last_day_of_data(curr_date: str, borough: Borough, dry_run: bool):
 
     print("Scraping rightmove for borough: {}, days: {}".format(borough.name, 1))
 
-    results = region_scraper.scrape(borough.rightmove_code, days_added=1)
+    results = scraper_wrapper.scrape(borough.rightmove_code, days_added=1)
     bedrooms_available = results.number_bedrooms.unique()
 
     for bedrooms in bedrooms_available:
