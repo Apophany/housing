@@ -19,6 +19,8 @@ class RightmoveData:
     The query to rightmove can be renewed by calling the `refresh_data` method.
     """
 
+    __error_string = "To view this media, please visit the on-line version of this page"
+
     def __init__(self, url: str, get_floorplans: bool = False):
         """Initialize the scraper with a URL from the results of a property
         search performed on www.rightmove.co.uk.
@@ -233,15 +235,15 @@ class RightmoveData:
                 print("Failed to get date added for: {}".format(weblink))
                 dates_added.append("")
 
-            if description:
+            if self._valid_description(description):
                 descriptions.append(description)
-            elif description_2:
+            elif self._valid_description(description_2):
                 descriptions.append(description_2)
-            elif description_3:
+            elif self._valid_description(description_3):
                 descriptions.append(description_3)
-            elif description_4:
+            elif self._valid_description(description_4):
                 descriptions.append(description_4)
-            elif description_5:
+            elif self._valid_description(description_5):
                 descriptions.append(description_5)
             else:
                 print("Failed to get descriptions for: {}".format(weblink))
@@ -319,10 +321,17 @@ class RightmoveData:
 
         return results.drop_duplicates()
 
+    def _valid_description(self, description):
+        if description and self.__error_string not in description:
+            return True
+        return False
+
     def _parse_date(self, date: str) -> str:
         if "today" in date:
             return dt.datetime.today().strftime("%Y-%m-%d")
         elif "yesterday" in date:
             return (dt.datetime.today() - dt.timedelta(1)).strftime("%Y-%m-%d")
+        elif "Added on" in date:
+            date = date.strip("Added on ")
 
         return dt.datetime.strptime(date, "%d %B %Y").strftime("%Y-%m-%d")
