@@ -5,7 +5,7 @@ from pandas import DataFrame
 from areainfo.borough import Borough
 from areainfo.boroughs import get_boroughs
 from resources.file_paths import data_save_path_prefix
-from rightmove import scraper_wrapper
+from rightmove import rightmove_api
 
 __save_path_template = data_save_path_prefix + "/{region}/{date}/{numBedrooms}"
 __file_name = "housing_data.csv"
@@ -50,7 +50,7 @@ def save_all_days_data(borough: Borough, dry_run: bool):
     for num_bedrooms in range(0, __max_bedrooms + 1):
         print("Scraping rightmove for borough: {}, bedrooms = {}, days = {}".format(borough.name, num_bedrooms, "ALL"))
 
-        results = scraper_wrapper.scrape(borough.rightmove_code, min_bedrooms=num_bedrooms, max_bedrooms=num_bedrooms)
+        results = rightmove_api.get(borough.rightmove_code, min_bedrooms=num_bedrooms, max_bedrooms=num_bedrooms)
         added_dates = results.date_added.unique()
 
         for curr_date in added_dates:
@@ -65,7 +65,7 @@ def save_last_day_of_data(curr_date: str, borough: Borough, dry_run: bool):
 
     print("Scraping rightmove for borough: {}, days: {}".format(borough.name, 1))
 
-    results = scraper_wrapper.scrape(borough.rightmove_code, days_added=1)
+    results = rightmove_api.get(borough.rightmove_code, days_added=1)
     bedrooms_available = results.number_bedrooms.unique()
 
     for bedrooms in bedrooms_available:

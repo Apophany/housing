@@ -1,4 +1,4 @@
-from rightmove.scraper import RightmoveData
+from rightmove.rightmove_scraper import RightmoveData
 
 __base_url = "https://www.rightmove.co.uk/property-for-sale/find.html?" \
              "searchType=SALE" \
@@ -22,7 +22,7 @@ __base_url = "https://www.rightmove.co.uk/property-for-sale/find.html?" \
              "&auction=false"
 
 
-def scrape(region, min_bedrooms=None, max_bedrooms=None, days_added=None):
+def get(region, min_bedrooms=None, max_bedrooms=None, days_added=None):
     url = __rightmove_url(
         region_code=region,
         min_bedrooms=min_bedrooms,
