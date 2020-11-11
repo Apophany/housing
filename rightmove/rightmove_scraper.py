@@ -333,5 +333,9 @@ class RightmoveData:
             return (dt.datetime.today() - dt.timedelta(1)).strftime("%Y-%m-%d")
         elif "Added on" in date:
             date = date.strip("Added on ")
+            return dt.datetime.strptime(date, "%d/%m/%Y").strftime("%Y-%m-%d")
+        elif "Reduced on" in date:
+            date = date.strip("Reduced on ")
+            return dt.datetime.strptime(date, "%d/%m/%Y").strftime("%Y-%m-%d")
 
         return dt.datetime.strptime(date, "%d %B %Y").strftime("%Y-%m-%d")

@@ -1,3 +1,4 @@
+from areainfo import boroughs
 from rightmove.rightmove_scraper import RightmoveData
 
 __base_url = "https://www.rightmove.co.uk/property-for-sale/find.html?" \
@@ -55,3 +56,8 @@ def __xstr(s):
     if s is None:
         return ''
     return str(s)
+
+
+if __name__ == "__main__":
+    # for i in range(0, 10):
+    get(boroughs.GREENWICH.rightmove_code, 3, 3)

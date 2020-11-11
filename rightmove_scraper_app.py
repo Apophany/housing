@@ -54,6 +54,8 @@ def save_all_days_data(borough: Borough, dry_run: bool):
         added_dates = results.date_added.unique()
 
         for curr_date in added_dates:
+            if curr_date is None or curr_date == "":
+                continue
             results_for_date = results.loc[results["date_added"] == curr_date]
             save_results(curr_date, borough.name, num_bedrooms, results_for_date, dry_run)
 
@@ -76,12 +78,12 @@ def save_last_day_of_data(curr_date: str, borough: Borough, dry_run: bool):
 def run_main(args):
     backfill = args.backfill
     borough_name = args.borough
-    excluded_borough = args.excludeBorough
+    excluded_boroughs = args.excludeBorough
     dry_run = args.dryRun
 
     today = date.today().strftime("%Y-%m-%d")
     for borough in get_boroughs():
-        if (borough_name and not borough_name == borough.name) or excluded_borough == borough.name:
+        if (borough_name and not borough_name == borough.name) or borough.name in excluded_boroughs:
             continue
         if backfill:
             save_all_days_data(borough, dry_run)
@@ -93,7 +95,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--backfill", help="Backfill all rightmove data", action="store_true")
     parser.add_argument("--borough", help="Borough to run data collection for", type=str)
-    parser.add_argument("--excludeBorough", help="Exclude the borough from the results", type=str)
+    parser.add_argument("--excludeBorough", nargs="*", help="Exclude the borough from the results", default=[])
     parser.add_argument("--dryRun", help="Don't save the data to file", action="store_true")
     parsed_args = parser.parse_args()
 
