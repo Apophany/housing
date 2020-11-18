@@ -1,13 +1,16 @@
 import datetime as dt
+import logging
+
 import numpy as np
 import pandas as pd
 import requests
 from lxml import html
 
+logger = logging.getLogger(__name__)
+
 
 # Copied from: https://github.com/toby-p/rightmove_webscraper.py
 # Modified to include description and date added
-
 class RightmoveData:
     """The `RightmoveData` webscraper collects structured data on properties
     returned by a search performed on www.rightmove.co.uk
@@ -38,7 +41,7 @@ class RightmoveData:
 
     @staticmethod
     def _request(url: str):
-        print("Requesting: {}".format(url))
+        logger.info("Requesting: {}".format(url))
         r = requests.get(url)
         return r.status_code, r.content
 
@@ -232,7 +235,7 @@ class RightmoveData:
             elif date_added_3:
                 dates_added.append(self._parse_date(date_added_3[0]))
             else:
-                print("Failed to get date added for: {}".format(weblink))
+                logger.error("Failed to get date added for: {}".format(weblink))
                 dates_added.append("")
 
             if self._valid_description(description):
@@ -246,7 +249,7 @@ class RightmoveData:
             elif self._valid_description(description_5):
                 descriptions.append(description_5)
             else:
-                print("Failed to get descriptions for: {}".format(weblink))
+                logger.error("Failed to get descriptions for: {}".format(weblink))
                 descriptions.append("")
 
             if get_floorplans:

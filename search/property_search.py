@@ -27,9 +27,9 @@ def search(
                 data = pd.read_csv(bedroom_path.path + __file_name)
                 data = data.loc[data["price"].between(price_min, price_max)]
                 if address is not None:
-                    data = data.loc[data["address"].str.contains(address)]
+                    data = data.loc[data["address"].str.contains('(?i)' + address)]
                 if postcode is not None:
-                    data = data.loc[data["postcode"].sts.contains(postcode)]
+                    data = data.loc[data["postcode"].astype(str).str.contains('(?i)' + postcode)]
                 if data.size > 0:
                     results = results.append(data)
     return results
@@ -38,10 +38,10 @@ def search(
 if __name__ == "__main__":
     res = search(
         search_borough=boroughs.HARINGEY,
-        address='Elder Avenue',
+        address='Muswell Avenue',
         min_bedrooms=2,
         max_bedrooms=2,
-        price_min=450_000,
-        price_max=600_000
+        price_min=425_000,
+        price_max=650_000
     )
     print(res.to_markdown())

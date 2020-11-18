@@ -1,7 +1,10 @@
+import logging.config
 import os
 from argparse import ArgumentParser
-from datetime import date
+from datetime import date, datetime
+
 from pandas import DataFrame
+
 from areainfo.borough import Borough
 from areainfo.boroughs import get_boroughs
 from resources.file_paths import data_save_path_prefix
@@ -10,6 +13,8 @@ from rightmove import rightmove_api
 __save_path_template = data_save_path_prefix + "/{region}/{date}/{numBedrooms}"
 __file_name = "housing_data.csv"
 __max_bedrooms = 10
+
+logger = logging.getLogger()
 
 
 def save_results(curr_date: str, borough_name: str, num_bedrooms: int, result: DataFrame, dry_run: bool):
@@ -21,7 +26,7 @@ def save_results(curr_date: str, borough_name: str, num_bedrooms: int, result: D
         region=borough_name,
         numBedrooms=int(num_bedrooms)
     )
-    print("Saving rightmove data for: {}".format(save_path))
+    logger.info("Saving rightmove data for: {}".format(save_path))
 
     if dry_run:
         return
@@ -48,7 +53,11 @@ def save_all_days_data(borough: Borough, dry_run: bool):
     """
 
     for num_bedrooms in range(0, __max_bedrooms + 1):
-        print("Scraping rightmove for borough: {}, bedrooms = {}, days = {}".format(borough.name, num_bedrooms, "ALL"))
+        logger.info("Scraping rightmove for borough: {}, bedrooms = {}, days = {}".format(
+            borough.name,
+            num_bedrooms,
+            "ALL"
+        ))
 
         results = rightmove_api.get(borough.rightmove_code, min_bedrooms=num_bedrooms, max_bedrooms=num_bedrooms)
         added_dates = results.date_added.unique()
@@ -65,7 +74,7 @@ def save_last_day_of_data(curr_date: str, borough: Borough, dry_run: bool):
     Scrape rightmove for borough data with properties added in the last 24 hours
     """
 
-    print("Scraping rightmove for borough: {}, days: {}".format(borough.name, 1))
+    logger.info("Scraping rightmove for borough: {}, days: {}".format(borough.name, 1))
 
     results = rightmove_api.get(borough.rightmove_code, days_added=1)
     bedrooms_available = results.number_bedrooms.unique()
@@ -97,6 +106,12 @@ if __name__ == "__main__":
     parser.add_argument("--borough", help="Borough to run data collection for", type=str)
     parser.add_argument("--excludeBorough", nargs="*", help="Exclude the borough from the results", default=[])
     parser.add_argument("--dryRun", help="Don't save the data to file", action="store_true")
+    parser.add_argument("--logConfigFile", help="Logging configuration file", type=str)
+    parser.add_argument("--logFilePath", help="Log location", type=str)
     parsed_args = parser.parse_args()
+
+    logging.config.fileConfig(parsed_args.logConfigFile, disable_existing_loggers=False, defaults={
+        'logfilename': parsed_args.logFilePath + '/' + datetime.now().strftime('scraper-app-%Y-%m-%d.log')
+    })
 
     run_main(parsed_args)
